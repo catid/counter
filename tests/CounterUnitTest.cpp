@@ -362,13 +362,13 @@ bool TestCompressionF(int bias)
             // Skip cases we cannot handle
             if (recent < original)
             {
-                unsigned delta = original - recent;
+                int delta = original - recent;
                 if (delta >= SmallerT::kMSB - bias)
                     continue;
             }
             else
             {
-                unsigned delta = recent - original;
+                int delta = recent - original;
                 if (delta > SmallerT::kMSB + bias)
                     continue;
             }
@@ -388,8 +388,14 @@ bool TestCompressionF(int bias)
             }
 #endif
 
-            LargerT expanded = LargerT::ExpandFromTruncated(fullRecent, truncatedOriginal, bias);
+            LargerT expanded = LargerT::ExpandFromTruncatedWithBias(fullRecent, truncatedOriginal, bias);
             TEST_CHECK(expanded.ToUnsigned() == fullOriginal.ToUnsigned());
+
+            if (bias == 0)
+            {
+                expanded = LargerT::ExpandFromTruncated(fullRecent, truncatedOriginal);
+                TEST_CHECK(expanded.ToUnsigned() == fullOriginal.ToUnsigned());
+            }
         }
     }
 
@@ -415,6 +421,69 @@ bool TestCompression()
         TEST_CHECK((TestCompressionF<Counter64, Counter10>(bias)));
         //TEST_CHECK((TestCompressionF<Counter64, Counter16>(bias)));
     }
+    return true;
+}
+
+
+bool TestCompressionNoBias8()
+{
+    for (int64_t base = 0; base < 256 * 2 + 1; ++base)
+    {
+        for (int64_t offset = -256 - 1; offset < 256 + 1; ++offset)
+        {
+            const int64_t neighbor = base + offset;
+            if (neighbor < 0) {
+                continue;
+            }
+
+            Counter64 recent = base;
+            Counter8 smaller = (uint8_t)neighbor;
+            Counter64 reconstructed = Counter64::ExpandFromTruncated(recent, smaller);
+
+            // Compare with reference version
+            Counter64 ref_reconstructed = Counter64::ExpandFromTruncatedWithBias(recent, smaller, 0);
+
+            if (reconstructed.ToUnsigned() != ref_reconstructed.ToUnsigned())
+            {
+                std::cout << "!! TestCompressionNoBias8 failed: New algorithm does not match reference version for base = " << base << ", offset = " << offset << std::endl;
+
+                COUNTER_DEBUG_BREAK();
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool TestCompressionNoBias16()
+{
+    for (int64_t base = 0; base < 65536 * 2 + 1; ++base)
+    {
+        for (int64_t offset = -65536 - 1; offset < 65536 + 1; ++offset)
+        {
+            const int64_t neighbor = base + offset;
+            if (neighbor < 0) {
+                continue;
+            }
+
+            Counter64 recent = base;
+            Counter16 smaller = (uint16_t)neighbor;
+            Counter64 reconstructed = Counter64::ExpandFromTruncated(recent, smaller);
+
+            // Compare with reference version
+            Counter64 ref_reconstructed = Counter64::ExpandFromTruncatedWithBias(recent, smaller, 0);
+
+            if (reconstructed.ToUnsigned() != ref_reconstructed.ToUnsigned())
+            {
+                std::cout << "!! TestCompressionNoBias16 failed: New algorithm does not match reference version for base = " << base << ", offset = " << offset << std::endl;
+
+                COUNTER_DEBUG_BREAK();
+                return false;
+            }
+        }
+    }
+
     return true;
 }
 
@@ -447,7 +516,9 @@ bool RunTests()
         LIST_TEST(TestComparisons),
         LIST_TEST(TestGetTickCount),
         LIST_TEST(TestCompression),
-        {}
+        LIST_TEST(TestCompressionNoBias8),
+        LIST_TEST(TestCompressionNoBias16),
+    {}
     };
 
     for (unsigned i = 0; TestList[i].Function != nullptr; ++i)
@@ -473,11 +544,11 @@ int main()
     if (!RunTests())
     {
         std::cout << "Unit test FAILED!" << std::endl;
+        return -1;
     }
     else
     {
         std::cout << "Unit tests all passed." << std::endl;
+        return 0;
     }
-
-    return 0;
 }
