@@ -352,12 +352,14 @@ bool TestCompressionF(int bias)
     for (unsigned original = 0; original < range; ++original)
     {
         LargerT fullOriginal = original;
-        SmallerT truncatedOriginal = fullOriginal.Truncate<SmallerT>();
+        SmallerT truncatedOriginal;
+        fullOriginal.TruncateTo(truncatedOriginal);
 
         for (unsigned recent = 0; recent < range; ++recent)
         {
             LargerT fullRecent = recent;
-            typename SmallerT truncatedRecent = fullRecent.Truncate<typename SmallerT>();
+            SmallerT truncatedRecent;
+            fullRecent.TruncateTo(truncatedRecent);
 
             // Skip cases we cannot handle
             if (recent < original)

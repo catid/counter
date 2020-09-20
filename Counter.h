@@ -221,12 +221,12 @@ public:
 
     /// Compress to smaller counter by truncating
     template<class SmallerT>
-    COUNTER_FORCE_INLINE SmallerT Truncate() const
+    COUNTER_FORCE_INLINE void TruncateTo(SmallerT& result) const
     {
         static_assert(SmallerT::kBits < kBits, "Smaller type must be smaller");
 
         // Truncate to smaller type
-        return SmallerT(static_cast<typename SmallerT::ValueType>(Value));
+        result = static_cast<typename SmallerT::ValueType>(Value);
     }
 
     /// Expand from truncated counter
