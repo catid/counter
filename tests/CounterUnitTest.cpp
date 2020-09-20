@@ -127,22 +127,22 @@ bool TestIncrement()
 template<class CounterT>
 bool TestConstantsF_NoPadding()
 {
-    static_assert(CounterT::kBits == sizeof(CounterT::ValueType) * 8, "wrong type");
+    static_assert(CounterT::kBits == sizeof(typename CounterT::ValueType) * 8, "wrong type");
 
-    CounterT::ValueType x = CounterT::kMask;
-    TEST_CHECK((CounterT::ValueType)(x + 1) == 0);
+    typename CounterT::ValueType x = CounterT::kMask;
+    TEST_CHECK((typename CounterT::ValueType)(x + 1) == 0);
     TEST_CHECK((CounterT::kMask >> (CounterT::kBits - 1)) == 1);
-    CounterT::ValueType y = CounterT::kMSB;
-    TEST_CHECK((CounterT::ValueType)(y + y) == 0);
+    typename CounterT::ValueType y = CounterT::kMSB;
+    TEST_CHECK((typename CounterT::ValueType)(y + y) == 0);
     TEST_CHECK((CounterT::kMSB >> (CounterT::kBits - 1)) == 1);
-    TEST_CHECK((CounterT::ValueType)(CounterT::kMSB << 1) == 0);
+    TEST_CHECK((typename CounterT::ValueType)(CounterT::kMSB << 1) == 0);
     return true;
 }
 
 template<class CounterT>
 bool TestConstantsF_Padding()
 {
-    static_assert(CounterT::kBits != sizeof(CounterT::ValueType) * 8, "wrong type");
+    static_assert(CounterT::kBits != sizeof(typename CounterT::ValueType) * 8, "wrong type");
 
     TEST_CHECK((CounterT::kMask >> CounterT::kBits) == 0);
     TEST_CHECK((CounterT::kMask >> (CounterT::kBits - 1)) != 0);
@@ -357,7 +357,7 @@ bool TestCompressionF(int bias)
         for (unsigned recent = 0; recent < range; ++recent)
         {
             LargerT fullRecent = recent;
-            SmallerT truncatedRecent = fullRecent.Truncate<SmallerT>();
+            typename SmallerT truncatedRecent = fullRecent.Truncate<typename SmallerT>();
 
             // Skip cases we cannot handle
             if (recent < original)
